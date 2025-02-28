@@ -1,4 +1,4 @@
-const selections = {
+const selections = loadSelectionsFromLocalStorage() || {
   Jason: new Set(),
   Arthur: new Set(),
   Cameron: new Set(),
@@ -7,7 +7,42 @@ const selections = {
 
 let currentUser = "Jason";
 
+// Function to save selections to local storage
+function saveSelectionsToLocalStorage() {
+  // Convert Sets to arrays for storage
+  const selectionsToSave = {};
+
+  Object.keys(selections).forEach((user) => {
+    selectionsToSave[user] = Array.from(selections[user]);
+  });
+
+  localStorage.setItem(
+    "dinnerSchedulerSelections",
+    JSON.stringify(selectionsToSave)
+  );
+}
+
+// Function to load selections from local storage
+function loadSelectionsFromLocalStorage() {
+  const savedSelections = localStorage.getItem("dinnerSchedulerSelections");
+
+  if (!savedSelections) {
+    return null;
+  }
+
+  const parsedSelections = JSON.parse(savedSelections);
+  const loadedSelections = {};
+
+  // Convert arrays back to Sets
+  Object.keys(parsedSelections).forEach((user) => {
+    loadedSelections[user] = new Set(parsedSelections[user]);
+  });
+
+  return loadedSelections;
+}
+
 function generateDates() {
+  // This function remains the same
   const dates = [];
   const startDate = new Date(2025, 2, 1); // March 1, 2025
   const endDate = new Date(2025, 2, 31); // March 31, 2025
@@ -19,6 +54,7 @@ function generateDates() {
 }
 
 function createCalendar() {
+  // This function remains mostly the same
   const datesGrid = document.getElementById("datesGrid");
   const dates = generateDates();
 
@@ -72,6 +108,10 @@ function toggleDate(date) {
   } else {
     selections[currentUser].add(dateStr);
   }
+
+  // Save to local storage whenever a date is toggled
+  saveSelectionsToLocalStorage();
+
   updateDisplay();
 }
 
@@ -141,26 +181,22 @@ document.getElementById("userSelect").addEventListener("change", (e) => {
   updateDisplay();
 });
 
-// Video error handling
-const video = document.getElementById("myVideo");
-video.addEventListener("error", function (e) {
-  console.error("Error loading video:", video.error);
-});
-
 // Video play button functionality
-const playButton = document.getElementById('playButton');
-const myVideo = document.getElementById('myVideo');
+const myVideo = document.getElementById("myVideo");
+const playButton = document.getElementById("playButton");
 
-playButton.addEventListener('click', () => {
+if (playButton && myVideo) {
+  playButton.addEventListener("click", () => {
     myVideo.play();
     myVideo.muted = false;
-    playButton.style.display = 'none';
-});
+    playButton.style.display = "none";
+  });
 
-// Show play button if video is paused
-myVideo.addEventListener('pause', () => {
-    playButton.style.display = 'block';
-});
+  // Show play button if video is paused
+  myVideo.addEventListener("pause", () => {
+    playButton.style.display = "block";
+  });
+}
 
 // Initial display
 updateDisplay();
