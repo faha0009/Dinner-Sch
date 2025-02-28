@@ -1,48 +1,64 @@
-const selections = loadSelectionsFromLocalStorage() || {
-  Jason: new Set(),
-  Arthur: new Set(),
-  Cameron: new Set(),
-  George: new Set(),
-};
+// Initialize selections object
+let selections = {};
+
+// Immediately load selections from local storage
+let storedSelections;
+try {
+  storedSelections = JSON.parse(
+    localStorage.getItem("dinnerSchedulerSelections")
+  );
+  console.log("Loaded from storage:", storedSelections);
+
+  // Convert stored arrays back to Sets
+  if (storedSelections) {
+    ["Jason", "Arthur", "Cameron", "George"].forEach((user) => {
+      if (storedSelections[user]) {
+        selections[user] = new Set(storedSelections[user]);
+      } else {
+        selections[user] = new Set();
+      }
+    });
+  } else {
+    // Default empty selections if nothing in storage
+    selections = {
+      Jason: new Set(),
+      Arthur: new Set(),
+      Cameron: new Set(),
+      George: new Set(),
+    };
+  }
+} catch (e) {
+  console.error("Error loading from local storage:", e);
+  // Default empty selections if error
+  selections = {
+    Jason: new Set(),
+    Arthur: new Set(),
+    Cameron: new Set(),
+    George: new Set(),
+  };
+}
 
 let currentUser = "Jason";
 
 // Function to save selections to local storage
 function saveSelectionsToLocalStorage() {
-  // Convert Sets to arrays for storage
-  const selectionsToSave = {};
+  try {
+    // Convert Sets to arrays for storage
+    const selectionsToSave = {};
 
-  Object.keys(selections).forEach((user) => {
-    selectionsToSave[user] = Array.from(selections[user]);
-  });
+    Object.keys(selections).forEach((user) => {
+      selectionsToSave[user] = Array.from(selections[user]);
+    });
 
-  localStorage.setItem(
-    "dinnerSchedulerSelections",
-    JSON.stringify(selectionsToSave)
-  );
-}
-
-// Function to load selections from local storage
-function loadSelectionsFromLocalStorage() {
-  const savedSelections = localStorage.getItem("dinnerSchedulerSelections");
-
-  if (!savedSelections) {
-    return null;
+    const dataToSave = JSON.stringify(selectionsToSave);
+    localStorage.setItem("dinnerSchedulerSelections", dataToSave);
+    console.log("Saved to storage:", dataToSave);
+  } catch (e) {
+    console.error("Error saving to local storage:", e);
   }
-
-  const parsedSelections = JSON.parse(savedSelections);
-  const loadedSelections = {};
-
-  // Convert arrays back to Sets
-  Object.keys(parsedSelections).forEach((user) => {
-    loadedSelections[user] = new Set(parsedSelections[user]);
-  });
-
-  return loadedSelections;
 }
 
 function generateDates() {
-  // This function remains the same
   const dates = [];
   const startDate = new Date(2025, 2, 1); // March 1, 2025
   const endDate = new Date(2025, 2, 31); // March 31, 2025
@@ -54,7 +70,6 @@ function generateDates() {
 }
 
 function createCalendar() {
-  // This function remains mostly the same
   const datesGrid = document.getElementById("datesGrid");
   const dates = generateDates();
 
@@ -200,3 +215,21 @@ if (playButton && myVideo) {
 
 // Initial display
 updateDisplay();
+
+// Add test button for local storage
+window.testStorage = function () {
+  try {
+    const testKey = "testStorage";
+    localStorage.setItem(testKey, "test");
+    const testResult = localStorage.getItem(testKey);
+    localStorage.removeItem(testKey);
+
+    if (testResult === "test") {
+      alert("Local storage is working!");
+    } else {
+      alert("Local storage test failed!");
+    }
+  } catch (e) {
+    alert("Error testing local storage: " + e.message);
+  }
+};

@@ -12,14 +12,13 @@
     <div class="container">
         <header>
             <h1>Boy's 🍽️ Dinner Scheduler</h1>
-        <select id="userSelect">
-            <option value="Jason">Jason</option>
-            <option value="Arthur">Arthur</option>
-            <option value="Cameron">Cameron</option>
-            <option value="George">George</option>
-        </select>
+            <select id="userSelect">
+                <option value="Jason">Jason</option>
+                <option value="Arthur">Arthur</option>
+                <option value="Cameron">Cameron</option>
+                <option value="George">George</option>
+            </select>
         </header>
-
         <div class="calendar">
             <h2>March 2025</h2>
             <div class="weekdays">
@@ -33,15 +32,19 @@
             </div>
             <div id="datesGrid" class="dates"></div>
         </div>
-
         <div class="selections">
             <h2>Selected Dates</h2>
             <div id="selectedDates"></div>
         </div>
-
         <div class="common-dates">
             <h2>Common Available Dates</h2>
             <div id="commonDates"></div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="testStorage()" class="test-button">
+                Test Local Storage
+            </button>
         </div>
     </div>
 
