@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boy's 🍽️ Dinner Scheduler</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Boy's 🍽️ Dinner Scheduler</h1>
+        <select id="userSelect">
+            <option value="Jason">Jason</option>
+            <option value="Arthur">Arthur</option>
+            <option value="Cameron">Cameron</option>
+            <option value="George">George</option>
+        </select>
+        </header>
+
+        <div class="calendar">
+            <h2>March 2025</h2>
+            <div class="weekdays">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+            </div>
+            <div id="datesGrid" class="dates"></div>
+        </div>
+
+        <div class="selections">
+            <h2>Selected Dates</h2>
+            <div id="selectedDates"></div>
+        </div>
+
+        <div class="common-dates">
+            <h2>Common Available Dates</h2>
+            <div id="commonDates"></div>
+        </div>
+    </div>
+
+    <div class="video-container">
+        <div class="video-wrapper">
+            <video loop class="corner-video" id="myVideo">
+                <source src="video/guccimane.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <button id="playButton" class="play-button">▶ Play</button>
+        </div>
+        <p class="fun-text">The J in Jason stands for Javascript! 🚀</p>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
