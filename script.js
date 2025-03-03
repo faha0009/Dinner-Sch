@@ -1,60 +1,125 @@
 // Initialize selections object
-let selections = {};
-
-// Immediately load selections from local storage
-let storedSelections;
-try {
-  storedSelections = JSON.parse(
-    localStorage.getItem("dinnerSchedulerSelections")
-  );
-  console.log("Loaded from storage:", storedSelections);
-
-  // Convert stored arrays back to Sets
-  if (storedSelections) {
-    ["Jason", "Arthur", "Cameron", "George"].forEach((user) => {
-      if (storedSelections[user]) {
-        selections[user] = new Set(storedSelections[user]);
-      } else {
-        selections[user] = new Set();
-      }
-    });
-  } else {
-    // Default empty selections if nothing in storage
-    selections = {
-      Jason: new Set(),
-      Arthur: new Set(),
-      Cameron: new Set(),
-      George: new Set(),
-    };
-  }
-} catch (e) {
-  console.error("Error loading from local storage:", e);
-  // Default empty selections if error
-  selections = {
-    Jason: new Set(),
-    Arthur: new Set(),
-    Cameron: new Set(),
-    George: new Set(),
-  };
-}
+let selections = {
+  Jason: new Set(),
+  Arthur: new Set(),
+  Cameron: new Set(),
+  George: new Set(),
+};
 
 let currentUser = "Jason";
+let binId = localStorage.getItem("dinnerSchedulerBinId");
 
-// Function to save selections to local storage
-function saveSelectionsToLocalStorage() {
+// Function to fetch selections from JSONbin
+async function fetchSelections() {
   try {
-    // Convert Sets to arrays for storage
-    const selectionsToSave = {};
+    // If no bin ID exists yet, create one
+    if (!binId) {
+      await createBin();
+      return;
+    }
 
+    const response = await fetch(
+      `https://api.jsonbin.io/v3/b/${binId}/latest`,
+      {
+        method: "GET",
+        headers: {
+          "X-Access-Key":
+            "$2a$10$yfHnouEKiE8UawDhqDdEHuYNjQshFI8Ea5DQpWKKwFeGaYtziT1F",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Error fetching data:", response.statusText);
+      if (response.status === 404) {
+        // Bin not found, create a new one
+        localStorage.removeItem("dinnerSchedulerBinId");
+        await createBin();
+      }
+      return;
+    }
+
+    const result = await response.json();
+    const data = result.record;
+
+    // Convert arrays to Sets
     Object.keys(selections).forEach((user) => {
-      selectionsToSave[user] = Array.from(selections[user]);
+      if (data[user]) {
+        selections[user] = new Set(data[user]);
+      }
     });
 
-    const dataToSave = JSON.stringify(selectionsToSave);
-    localStorage.setItem("dinnerSchedulerSelections", dataToSave);
-    console.log("Saved to storage:", dataToSave);
-  } catch (e) {
-    console.error("Error saving to local storage:", e);
+    updateDisplay();
+    console.log("Loaded from JSONbin:", data);
+  } catch (error) {
+    console.error("Error fetching selections:", error);
+  }
+}
+
+// Create a new bin for first time use
+async function createBin() {
+  try {
+    // Convert Sets to arrays for JSON
+    const arraySelections = {};
+    Object.keys(selections).forEach((user) => {
+      arraySelections[user] = Array.from(selections[user]);
+    });
+
+    const response = await fetch("https://api.jsonbin.io/v3/b", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Key":
+          "$2a$10$yfHnouEKiE8UawDhqDdEHuYNjQshFI8Ea5DQpWKKwFeGaYtziT1F",
+        "X-Bin-Private": "false",
+      },
+      body: JSON.stringify(arraySelections),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create bin");
+    }
+
+    const result = await response.json();
+    binId = result.metadata.id;
+    localStorage.setItem("dinnerSchedulerBinId", binId);
+    console.log("Created new JSONbin:", binId);
+  } catch (error) {
+    console.error("Error creating bin:", error);
+  }
+}
+
+// Function to save selections to JSONbin
+async function saveSelectionsToJSONbin() {
+  try {
+    if (!binId) {
+      await createBin();
+      return;
+    }
+
+    // Convert Sets to arrays for JSON
+    const arraySelections = {};
+    Object.keys(selections).forEach((user) => {
+      arraySelections[user] = Array.from(selections[user]);
+    });
+
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Key":
+          "$2a$10$yfHnouEKiE8UawDhqDdEHuYNjQshFI8Ea5DQpWKKwFeGaYtziT1F",
+      },
+      body: JSON.stringify(arraySelections),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update bin");
+    }
+
+    console.log("Saved to JSONbin");
+  } catch (error) {
+    console.error("Error saving to JSONbin:", error);
   }
 }
 
@@ -108,7 +173,7 @@ function createCalendar() {
   });
 }
 
-function toggleDate(date) {
+async function toggleDate(date) {
   // Create a new date object and set it to noon to avoid timezone issues
   const adjustedDate = new Date(date);
   adjustedDate.setHours(12, 0, 0, 0);
@@ -124,8 +189,8 @@ function toggleDate(date) {
     selections[currentUser].add(dateStr);
   }
 
-  // Save to local storage whenever a date is toggled
-  saveSelectionsToLocalStorage();
+  // Save to JSONbin whenever a date is toggled
+  await saveSelectionsToJSONbin();
 
   updateDisplay();
 }
@@ -213,23 +278,26 @@ if (playButton && myVideo) {
   });
 }
 
-// Initial display
-updateDisplay();
-
-// Add test button for local storage
-window.testStorage = function () {
+// Test JSONbin connection
+window.testJSONbin = async function () {
   try {
-    const testKey = "testStorage";
-    localStorage.setItem(testKey, "test");
-    const testResult = localStorage.getItem(testKey);
-    localStorage.removeItem(testKey);
+    const testResponse = await fetch("https://api.jsonbin.io/v3/c", {
+      method: "GET",
+      headers: {
+        "X-Access-Key":
+          "$2a$10$yfHnouEKiE8UawDhqDdEHuYNjQshFI8Ea5DQpWKKwFeGaYtziT1F",
+      },
+    });
 
-    if (testResult === "test") {
-      alert("Local storage is working!");
+    if (testResponse.ok) {
+      alert("JSONbin connection is working!");
     } else {
-      alert("Local storage test failed!");
+      alert("JSONbin connection failed: " + testResponse.statusText);
     }
   } catch (e) {
-    alert("Error testing local storage: " + e.message);
+    alert("Error testing JSONbin: " + e.message);
   }
 };
+
+// Load data when page loads
+document.addEventListener("DOMContentLoaded", fetchSelections);
